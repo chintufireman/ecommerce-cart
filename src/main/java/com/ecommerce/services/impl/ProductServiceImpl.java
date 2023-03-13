@@ -3,6 +3,7 @@ package com.ecommerce.services.impl;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.ecommerce.exceptions.ResourceNotFoundException;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -51,13 +52,13 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public ProductDto getProductById(Integer productId) {
-        Product product = this.productRepo.findById(productId).get();
+        Product product = this.productRepo.findById(productId).orElseThrow(()-> new ResourceNotFoundException("Product","Id",productId));
         return this.modelMapper.map(product, ProductDto.class);
     }
 
     @Override
     public ProductDto updateProduct(ProductDto productDto,Integer productId) {
-        Product product = this.productRepo.findById(productId).get();
+        Product product = this.productRepo.findById(productId).orElseThrow(()-> new ResourceNotFoundException("Product","Id",productId));
 
         product.setProductDetails(productDto.getProductDetails());
         product.setProductName(productDto.getProductName());
@@ -89,7 +90,8 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public void deleteProduct(Integer productId) {
-        this.productRepo.deleteById(productId);
+        Product product=this.productRepo.findById(productId).orElseThrow(()-> new ResourceNotFoundException("Product","Id",productId));
+        this.productRepo.delete(product);
     }
 
 }

@@ -16,4 +16,6 @@ public interface CartService {
     public void deleteCart(Integer cartId);
 
     public CartDetailsDto addProductToCart(Integer cartId,Integer productId);
+
+    public CartDetailsDto deleteProductFromCart(Integer cartId, Integer productId);
 }

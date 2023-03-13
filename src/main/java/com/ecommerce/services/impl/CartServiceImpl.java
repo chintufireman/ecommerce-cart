@@ -3,6 +3,7 @@ package com.ecommerce.services.impl;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.ecommerce.exceptions.ResourceNotFoundException;
 import com.ecommerce.repositories.ProductRepo;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,7 +53,7 @@ public class CartServiceImpl implements CartService {
 
     @Override
     public CartDetailsDto getCartById(Integer id) {
-        CartDetails cartDetails = this.cartRepo.findById(id).get();
+        CartDetails cartDetails = this.cartRepo.findById(id).orElseThrow(()-> new ResourceNotFoundException("Cart","Id",id));
         CartDetailsDto cartDetailsDto =this.modelMapper.map(cartDetails,CartDetailsDto.class);
         List<ProductDto> productDtoList = cartDetails.getProduct().stream()
                 .map(x->{
@@ -61,13 +62,14 @@ public class CartServiceImpl implements CartService {
                 }).collect(Collectors.toList());
 
         cartDetailsDto.setProducts(productDtoList);
+        cartDetailsDto.getUser().setPassword(null);
         return cartDetailsDto;
     }
 
     @Override
     public CartDetailsDto updateCart(CartDetailsDto cart, Integer cartId) {
 
-        CartDetails cartDetails = this.cartRepo.findById(cartId).get();
+        CartDetails cartDetails = this.cartRepo.findById(cartId).orElseThrow(()-> new ResourceNotFoundException("Cart Details","Id",cartId));
 
 
         List<Product> products= cart.getProducts().stream().map(x->
@@ -85,13 +87,14 @@ public class CartServiceImpl implements CartService {
 
     @Override
     public void deleteCart(Integer cartId) {
-        this.cartRepo.deleteById(cartId);
+       CartDetails cartDetails= this.cartRepo.findById(cartId).orElseThrow(()-> new ResourceNotFoundException("Cart Details","Id",cartId));
+        this.cartRepo.delete(cartDetails);
     }
 
     @Override
     public CartDetailsDto addProductToCart(Integer cartId,Integer productId) {
-    CartDetails cart = this.cartRepo.findById(cartId).get();
-    Product product = this.productRepo.findById(productId).get();
+    CartDetails cart = this.cartRepo.findById(cartId).orElseThrow(()-> new ResourceNotFoundException("Cart Details","Id",cartId));
+    Product product = this.productRepo.findById(productId).orElseThrow(()-> new ResourceNotFoundException("Product","Id",productId));
     List<Product> products = cart.getProduct();
     products.add(product);
     cart.setTotalItems(cart.getTotalItems()+1);
@@ -107,6 +110,26 @@ public class CartServiceImpl implements CartService {
                     .collect(Collectors.toList()));
 
     return updateCartDetailsDto;
+    }
+
+    @Override
+    public CartDetailsDto deleteProductFromCart(Integer cartId, Integer productId) {
+
+        CartDetails cart = this.cartRepo.findById(cartId).orElseThrow(()-> new ResourceNotFoundException("Cart Details","Id",cartId));
+        Product product = this.productRepo.findById(productId).orElseThrow(()-> new ResourceNotFoundException("Product","Id",productId));
+        List<Product> products = cart.getProduct();
+        products.remove(product);
+        cart.setTotalItems(cart.getTotalItems()-1);
+        cart.setProduct(products);
+        CartDetails updatedCart = this.cartRepo.save(cart);
+        CartDetailsDto updateCartDetailsDto = this.modelMapper.map(updatedCart,CartDetailsDto.class);
+        updateCartDetailsDto
+                .setProducts(updatedCart
+                        .getProduct()
+                        .stream()
+                        .map(x->this.modelMapper.map(x,ProductDto.class))
+                        .collect(Collectors.toList()));
+        return updateCartDetailsDto;
     }
 
 }

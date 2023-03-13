@@ -58,4 +58,10 @@ public class CartController {
         CartDetailsDto cartDetailsDto = this.cartService.addProductToCart(cartId,productId);
         return  new ResponseEntity<CartDetailsDto>(cartDetailsDto,HttpStatus.ACCEPTED);
     }
+
+    @DeleteMapping("/remove/{cartId}/{productId}")
+    public  ResponseEntity<CartDetailsDto> removeProductFromCart(@PathVariable Integer cartId,@PathVariable Integer productId){
+        CartDetailsDto cartDetailsDto = this.cartService.deleteProductFromCart(cartId,productId);
+        return new ResponseEntity<CartDetailsDto>(cartDetailsDto,HttpStatus.ACCEPTED);
+    }
 }
